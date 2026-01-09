@@ -15,8 +15,7 @@ jobs:
       id-token: write
     env:
       PYTHON_VERSION: "3.11"
-      CC: "ccache gcc"
-      CXX: "ccache g++"
+      CCACHE_DIR: /project/.ccache
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,7 +24,7 @@ jobs:
       - name: Cache ccache
         uses: actions/cache@v4
         with:
-          path: ~/.ccache
+          path: .ccache
           key: ccache-${{ runner.os }}-${{ hashFiles('Makefile') }}
           restore-keys: |
             ccache-${{ runner.os }}-
@@ -43,10 +42,24 @@ jobs:
             build-essential clang bison flex libfl-dev libreadline-dev gawk tcl-dev libffi-dev ccache \
             git mercurial graphviz xdot pkg-config python3-dev cmake
           python -m pip install --upgrade pip
-          python -m pip install build pybind11
+          python -m pip install build pybind11 cibuildwheel
 
-      - name: Build wheel
-        run: python -m build --wheel
+      - name: Build sdist
+        run: python -m build --sdist
+
+      - name: Build manylinux wheel
+        env:
+          CIBW_BUILD: "cp311-*"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_ENVIRONMENT: >-
+            CC="ccache gcc"
+            CXX="ccache g++"
+            CCACHE_DIR=/project/.ccache
+          CIBW_BEFORE_ALL_LINUX: >-
+            yum install -y
+            bison flex tcl-devel readline-devel libffi-devel
+            gcc gcc-c++ make cmake git mercurial ccache
+        run: python -m cibuildwheel --output-dir dist
 
       - name: ccache stats
         run: ccache -s
