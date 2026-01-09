@@ -1,0 +1,44 @@
+name: Publish pyosys
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PYTHON_VERSION: "3.11"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential clang bison flex libreadline-dev gawk tcl-dev libffi-dev \
+            git mercurial graphviz xdot pkg-config python3-dev cmake
+          python -m pip install --upgrade pip
+          python -m pip install build twine pybind11
+
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - name: Publish to GitHub Packages
+        env:
+          TWINE_USERNAME: ${{ github.actor }}
+          TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python -m twine upload \
+            --repository-url https://upload.pypi.pkg.github.com/${{ github.repository_owner }} \
+            dist/*
