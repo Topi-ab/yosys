@@ -117,7 +117,7 @@ with open(__yosys_root__ / "README.md", encoding="utf8") as f:
     long_description = f.read()
 
 setup(
-    name="pyosys",
+    name="ab-pyosys",
     packages=["pyosys"],
     version=version,
     description="Python access to libyosys",
