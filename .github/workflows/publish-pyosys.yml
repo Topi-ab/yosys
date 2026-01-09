@@ -16,6 +16,8 @@ jobs:
       PYTHON_VERSION: "3.11"
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Set up Python
         uses: actions/setup-python@v5
