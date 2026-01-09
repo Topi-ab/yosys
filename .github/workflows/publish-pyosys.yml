@@ -14,10 +14,20 @@ jobs:
       packages: write
     env:
       PYTHON_VERSION: "3.11"
+      CC: "ccache gcc"
+      CXX: "ccache g++"
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ runner.os }}-${{ hashFiles('Makefile') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -28,13 +38,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential clang bison flex libreadline-dev gawk tcl-dev libffi-dev \
+            build-essential clang bison flex libreadline-dev gawk tcl-dev libffi-dev ccache \
             git mercurial graphviz xdot pkg-config python3-dev cmake
           python -m pip install --upgrade pip
           python -m pip install build twine pybind11
 
       - name: Build wheel
         run: python -m build --wheel
+
+      - name: ccache stats
+        run: ccache -s
 
       - name: Publish to GitHub Packages
         env:
